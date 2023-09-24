@@ -1,9 +1,8 @@
-package com.example.decathlonTask.domain.entity;
+package com.example.notepad.domain.entity;
 
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 public class Note {

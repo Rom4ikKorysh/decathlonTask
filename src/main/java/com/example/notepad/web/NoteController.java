@@ -1,13 +1,15 @@
-package com.example.decathlonTask.web;
+package com.example.notepad.web;
 
-import com.example.decathlonTask.domain.dto.CreateNoteRequest;
-import com.example.decathlonTask.domain.entity.Note;
-import com.example.decathlonTask.service.NoteService;
+import com.example.notepad.domain.dto.CreateOrUpdateNoteRequest;
+import com.example.notepad.domain.dto.NoteDto;
+import com.example.notepad.domain.entity.Note;
+import com.example.notepad.service.NoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponents;
@@ -30,8 +32,8 @@ public class NoteController {
 			description = "Retrieves a list of all notes.",
 			tags = {"notes"})
 	@GetMapping
-	public ResponseEntity<List<Note>> getAllNotes() {
-		List<Note> notes = noteService.getAllNotes();
+	public ResponseEntity<List<NoteDto>> getAllNotes() {
+		List<NoteDto> notes = noteService.getAllNotes();
 		return ResponseEntity.ok(notes);
 	}
 
@@ -44,8 +46,8 @@ public class NoteController {
 			@ApiResponse(responseCode = "500", description = "Internal Server Error")
 	})
 	@GetMapping(value = "/findByTitle")
-	ResponseEntity<List<Note>> findNotesByTitle(@RequestParam(value = "title") String title) {
-		List<Note> notes = noteService.findNotesByTitleContains(title);
+	ResponseEntity<List<NoteDto>> findNotesByTitle(@RequestParam(value = "title") String title) {
+		List<NoteDto> notes = noteService.findNotesByTitleContains(title);
 		return ResponseEntity.ok(notes);
 	}
 
@@ -58,9 +60,9 @@ public class NoteController {
 			@ApiResponse(responseCode = "500", description = "Internal Server Error")
 	})
 	@PostMapping
-	public ResponseEntity<Note> createNote(@RequestBody CreateNoteRequest createNoteRequest, UriComponentsBuilder uriComponentsBuilder) {
-		Note note = noteService.createNote(createNoteRequest);
-		UriComponents uriComponents = uriComponentsBuilder.path("/notes/{id}").buildAndExpand(note.getId());
+	public ResponseEntity<String> createNote(@RequestBody @Valid CreateOrUpdateNoteRequest createOrUpdateNoteRequest, UriComponentsBuilder uriComponentsBuilder) {
+		Long noteId = noteService.createNote(createOrUpdateNoteRequest);
+		UriComponents uriComponents = uriComponentsBuilder.path("/notes/{id}").buildAndExpand(noteId);
 
 		var location = uriComponents.toUri();
 
@@ -82,17 +84,18 @@ public class NoteController {
 	}
 
 	@Operation(
-			summary = "Edit Note Content",
-			description = "Updates the content of a note by its ID.",
+			summary = "Update note",
+			description = "Updates notes values by id.",
 			tags = {"notes"})
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = Note.class))}),
+			@ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = String.class))}),
 			@ApiResponse(responseCode = "500", description = "Internal Server Error")
 	})
 	@PutMapping("/{id}")
-	public ResponseEntity<Note> editNoteContent(@PathVariable Long id, @RequestBody Note note) {
-		note.setId(id);
-		return ResponseEntity.ok(noteService.updateNote(note));
+	public ResponseEntity<String> updateNote(@PathVariable Long id,
+											 @Valid @RequestBody CreateOrUpdateNoteRequest note) {
+		noteService.updateNote(note, id);
+		return ResponseEntity.ok("Note with id " + id + " has been updated");
 	}
 
 }

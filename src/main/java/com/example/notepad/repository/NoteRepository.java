@@ -1,6 +1,6 @@
-package com.example.decathlonTask.repository;
+package com.example.notepad.repository;
 
-import com.example.decathlonTask.domain.entity.Note;
+import com.example.notepad.domain.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,8 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
-
-	Optional<Note> findNoteByTitle(String title);
+	Optional<Note> findNoteByTitleIgnoreCase(String title);
 
 	List<Note> findNotesByTitleContainingIgnoreCase(String searchInput);
 

@@ -1,10 +1,11 @@
-package com.example.decathlonTask.service;
+package com.example.notepad.service;
 
-import com.example.decathlonTask.domain.dto.CreateNoteRequest;
-import com.example.decathlonTask.domain.entity.Note;
-import com.example.decathlonTask.exception.AlreadyExistsException;
-import com.example.decathlonTask.exception.NotFoundException;
-import com.example.decathlonTask.repository.NoteRepository;
+import com.example.notepad.domain.dto.CreateOrUpdateNoteRequest;
+import com.example.notepad.domain.dto.NoteDto;
+import com.example.notepad.domain.entity.Note;
+import com.example.notepad.exception.AlreadyExistsException;
+import com.example.notepad.exception.NotFoundException;
+import com.example.notepad.repository.NoteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,8 +18,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class NoteServiceTest {
@@ -28,11 +28,14 @@ public class NoteServiceTest {
 	private NoteService noteService;
 
 	Long noteId = 1L;
-	Note note = new Note("test1", "test1");
+	Note note;
+	NoteDto noteDto;
 
 	@BeforeEach
 	void setUp() {
 		noteService = new NoteService(noteRepository);
+		note = new Note("test1", "test1");
+		noteDto = NoteDto.noteToNoteDto(note);
 	}
 
 	@Test
@@ -54,9 +57,9 @@ public class NoteServiceTest {
 
 	@Test
 	void createNote() {
-		CreateNoteRequest createNoteRequest = new CreateNoteRequest(note.getTitle(), note.getContent());
+		CreateOrUpdateNoteRequest createNoteRequest = new CreateOrUpdateNoteRequest(note.getTitle(), note.getContent());
 
-		when(noteRepository.findNoteByTitle(note.getTitle())).thenReturn(Optional.empty());
+		when(noteRepository.findNoteByTitleIgnoreCase(note.getTitle())).thenReturn(Optional.empty());
 
 		noteService.createNote(createNoteRequest);
 
@@ -65,11 +68,11 @@ public class NoteServiceTest {
 
 	@Test
 	void createNoteWhenNoteTitleIsExists() {
-		CreateNoteRequest createNoteRequest = new CreateNoteRequest(note.getTitle(), note.getContent());
+		CreateOrUpdateNoteRequest createNoteRequest = new CreateOrUpdateNoteRequest(note.getTitle(), note.getContent());
 
-		when(noteRepository.findNoteByTitle(note.getTitle())).thenReturn(Optional.of(note));
+		when(noteRepository.findNoteByTitleIgnoreCase(note.getTitle())).thenReturn(Optional.of(note));
 
-		Throwable alreadyExistsException = assertThrows(AlreadyExistsException.class, () -> noteService.createNote(createNoteRequest));
+		Exception alreadyExistsException = assertThrows(AlreadyExistsException.class, () -> noteService.createNote(createNoteRequest));
 		assertEquals("Note with this title " + note.getTitle() + " already exists", alreadyExistsException.getMessage());
 	}
 
@@ -86,19 +89,33 @@ public class NoteServiceTest {
 	void updateNote() {
 		when(noteRepository.findById(noteId)).thenReturn(Optional.of(note));
 
-		Note updatedNote = noteService.updateNote(note);
+		CreateOrUpdateNoteRequest createNoteRequest = new CreateOrUpdateNoteRequest(note.getTitle(), note.getContent());
 
-		verify(noteRepository).save(updatedNote);
+		noteService.updateNote(createNoteRequest, noteId);
+
+		verify(noteRepository).save(any(Note.class));
+	}
+
+	@Test
+	void updateNoteWhenIdIsNotExist() {
+		when(noteRepository.findById(noteId)).thenReturn(Optional.empty());
+
+		CreateOrUpdateNoteRequest createNoteRequest = new CreateOrUpdateNoteRequest(note.getTitle(), note.getContent());
+
+		Exception noteNotFoundException = assertThrows(NotFoundException.class, () -> noteService.updateNote(createNoteRequest, noteId));
+
+		assertEquals("Note with id " + noteId + " not found", noteNotFoundException.getMessage());
+
+		verify(noteRepository, times(0)).save(any(Note.class));
 	}
 
 	@Test
 	void findNotesByTitleContaining() {
-		List<Note> notes = new ArrayList<>();
-		notes.add(note);
+		List<Note> notes = List.of(note);
 
 		when(noteRepository.findNotesByTitleContainingIgnoreCase("t")).thenReturn(notes);
 
-		List<Note> returnedNotes = noteService.findNotesByTitleContains("t");
+		List<NoteDto> returnedNotes = noteService.findNotesByTitleContains("t");
 
 		assertEquals(returnedNotes.size(), notes.size());
 	}

@@ -1,4 +1,4 @@
-package com.example.decathlonTask.exception;
+package com.example.notepad.exception;
 
 public class AlreadyExistsException extends RuntimeException {
 
