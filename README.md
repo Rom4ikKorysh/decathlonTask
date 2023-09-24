@@ -37,8 +37,9 @@ Before you begin, ensure you have met the following requirements:
 
 1. Clone the repository from GitHub: git clone <https://github.com/Rom4ikKorysh/notepad-application.git>
 2. Navigate to the project directory: cd notepad-application
-3. Build the application:./mvnw clean package
-4. Run the application: ./mvnw spring-boot:run
+3. Navigate to the project file: [application.properties](src%2Fmain%2Fresources%2Fapplication.properties) and change to your username, passport and database connection
+4. Build the application:./mvnw clean package
+5. Run the application: ./mvnw spring-boot:run
 
 The application should now be running locally.
 
